@@ -79,4 +79,7 @@ end
 
 % Now we need to plot every transmitted signal.
 figure;
-plot(1:NumberOfBits, FSK(1, 1: NumberOfBits));
+plot(1:NumberOfBits * Tb, FSK(9, 1: NumberOfBits * Tb));
+title('FSK for SNR = 4 and amplitude = 0.50');
+xlim([1 400]);
+
