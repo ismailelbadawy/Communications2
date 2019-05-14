@@ -68,38 +68,33 @@ t = 1 : NumberOfBits * Tb;
 FSK = t * 0;
 PSK = t * 0;
 for k = 1 : 9
-
     for bit = 1 : NumberOfBits * Tb
         if(message(bit) == 1)
             % we need to set both the FSK and PSK
-            FSK(bit) = A(k) * cos(w1 * bit);
+            PSK(bit) = A(k) * cos(wc * bit);
         else
-            FSK(bit) = A(k) * cos(w2 * bit);
+            PSK(bit) = -1 * A(k) * cos(wc * bit);
         end
     end
-    
+
     % We need to try this 20 times and get different probability of error
     for trial = 1 : 20
         % Simulate that we pass the signal through the channel meaning 
         % we add the signal and the noise
         % Should be the same noise but we need to
         % make sure it corresponds to the length of each modulation technique
-        fskNoise = wgn(1, length(FSK), No / 2);
-
-        receivedFSK = FSK + fskNoise;
-    
-
+        pskNoise = wgn(1, length(PSK), No / 2);
+        
+        receivedPSK = PSK + pskNoise;
 
         % we need to create a matched filter for each amplitude
         % Note that a matched filter h(t) = s(Tb - t)
         % We also need to set the value of the output of the filter,
         % the output to the filter is the convolution between received signal and the matched filter
         for time = 1 : Tb
-            matchedFilterFSK1(time) = A(k) * cos(w1 * (Tb - time));
-            matchedFilterFSK2(time) = A(k) * cos(w2 * (Tb - time));
+            matchedFilterPSK(time) = A(k) * cos(wc * (Tb - time));
         end
-        outputFilter1 = conv(receivedFSK, matchedFilterFSK1);
-        outputFilter2 = conv(receivedFSK, matchedFilterFSK2);
+        outputFilterPSK = conv(receivedPSK, matchedFilterPSK);
 
         if (trial == 1)
             % Now we need to plot the transmitted signals and the received
@@ -107,46 +102,45 @@ for k = 1 : 9
             % We also need to plot the output of the filters
             snrValue = (-5 + k);
             if(snrValue == 3 || snrValue == -1)
-                figure;
-                subplot(4, 1, 1);
-                plot(1:NumberOfBits * Tb, FSK(1: NumberOfBits * Tb));
-                title("Transmitted FSK for SNR = " + snrValue + " and amplitude = " + A(k));
-                ylim([-1 1]);
-
-                subplot(4, 1, 2);
-                plot(1: NumberOfBits * Tb, receivedFSK(1:NumberOfBits * Tb));
-                title("Recevied signal ")
-                ylim([-10 10]);
-
-                subplot(4, 1, 3);
-                plot(1 : NumberOfBits * Tb, outputFilter1(1: NumberOfBits * Tb));
-                title("Filter 1 output");
-                xlim([1 1000]);
-                subplot(4, 1, 4);
-                plot(1 : NumberOfBits * Tb, outputFilter2(1: NumberOfBits * Tb));
-                title("Filter 2 output");
                 
+                % PSK Plotting
+                figure;
+                subplot(3, 1, 1);
+                plot(1:NumberOfBits * Tb, PSK(1: NumberOfBits * Tb));
+                title("Transmitted PSK for SNR = " + snrValue + " and amplitude = " + A(k));
+                ylim([-1 1]);
+                
+                subplot(3, 1, 2);
+                plot(1:NumberOfBits * Tb, receivedPSK(1: NumberOfBits * Tb));
+                title("Received signal ");
+                ylim([-5 5]);
+                
+                % plot the filter output
+                subplot(3, 1, 3);
+                plot(1 : NumberOfBits * Tb, outputFilterPSK( 1: NumberOfBits * Tb));
+                title("Filter output ");
+        
             end
         end
-        
+
         index = 1;
-        for time = Tb : Tb : length(outputFilter1)
-            if(outputFilter1(time) > outputFilter2(time))
-                decidedFSK(index) = 1; 
+        for time = Tb : Tb : length(outputFilterPSK)
+            if(outputFilterPSK(time) > 0)
+                decidedPSK(index) = 1;
             else
-                decidedFSK(index) = -1;
+                decidedPSK(index) = -1;
             end
             index = index + 1;
         end
 
-        erroneousBitsFSK = 0;
+        erroneousBitsPSK = 0;
         bk = transpose(bk);
-        for index = 1 : length(decidedFSK)
-            if(decidedFSK(index) ~= bk(index))
-                erroneousBitsFSK = erroneousBitsFSK + 1; 
+        for index = 1 : length(decidedPSK)
+            if(decidedPSK(index) ~= bk(index))
+                erroneousBitsPSK = erroneousBitsPSK + 1; 
             end
         end
-        Pe(trial) = erroneousBitsFSK / length(decidedFSK);
+        Pe(trial) = erroneousBitsPSK / length(decidedPSK);
     end
     Pavg(k) = mean(transpose(Pe));
 end
@@ -157,7 +151,7 @@ figure;
 semilogy(SNR, Pavg, 'b');
 hold on;
 semilogy(SNR, Pexact, 'r');
-title("BFSK Simulated Pe and Exact Pe");
+title("BPSK Simulated Pe and Exact Pe");
 xlabel("SNR in dB"); ylabel('Bit error rate');
 legend("Bit error rate simulation", "Bit error rate calculated");
 
