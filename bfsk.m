@@ -81,43 +81,72 @@ for amplitude = A
     end
 end
 
-% Should be the same noise but we need to
-% make sure it corresponds to the length of each modulation technique
-fskNoise = wgn(1, length(FSK), No/2);
-pskNoise = wgn(1, length(PSK), No/2);
 
 % Simulate that we pass the signal through the channel meaning 
 % we add the signal and the noise
-receivedFSK = FSK + fskNoise;
-receivedPSK = PSK + pskNoise;
+for amplitude = A
+    % Should be the same noise but we need to
+    % make sure it corresponds to the length of each modulation technique
+    fskNoise = wgn(1, length(FSK), No/2);
+    pskNoise = wgn(1, length(PSK), No/2);
+
+    receivedFSK(A == amplitude, :) = FSK(A == amplitude) + fskNoise;
+    receivedPSK(A == amplitude, :) = PSK(A == amplitude) + pskNoise;
+end
+
+
+% we need to create a matched filter for each amplitude
+% Note that a matched filter h(t) = s(Tb - t)
+% We also need to set the value of the output of the filter,
+% the output to the filter is the convolution between received signal and the matched filter
+for amplitude = A
+    for time = 1 : Tb
+        matchedFilter1(A == amplitude, time) = amplitude * cos(w1 * (Tb - time));
+        matchedFilter2(A == amplitude, time) = amplitude * cos(w2 * (Tb - time));
+    end
+    outputFilter1(A == amplitude, :) = conv(receivedFSK(A == amplitude, :), matchedFilter1(A == amplitude,  :));
+    outputFilter2(A == amplitude, :) = conv(receivedFSK(A == amplitude, :), matchedFilter2(A == amplitude, :));
+end
 
 % Now we need to plot the transmitted signals and the received
 % Plots starting with PSK or FSK are the transmitted and received signal plots.
+% We also need to plot the output of the filters
 for i = 1 : 9
     snrValue = (-5 + i);
     if(snrValue == 3 || snrValue == -1)
         figure;
-        subplot(2, 1, 1);
+        subplot(4, 1, 1);
         plot(1:NumberOfBits * Tb, FSK(i, 1: NumberOfBits * Tb));
         title("Transmitted FSK for SNR = " + snrValue + " and amplitude = " + A(i));
-        xlim([1 400]);
+        xlim([1 1000]);
         ylim([-1 1]);
-        subplot(2, 1, 2);
+        subplot(4, 1, 2);
         plot(1: NumberOfBits * Tb, receivedFSK(i, 1:NumberOfBits * Tb));
         title("Recevied signal ")
-        xlim([1 400]);
-        ylim([-5 5]);
-        figure;
-        subplot(2, 1, 1);
-        plot(1:NumberOfBits * Tb, PSK(i, 1: NumberOfBits * Tb));
-        title("Transmitted PSK for SNR = " + snrValue + " and amplitude = " + A(i));
-        xlim([1 400]);
-        ylim([-1 1]);
-        subplot(2,1, 2);
-        plot(1:NumberOfBits * Tb, receivedPSK(i, 1: NumberOfBits * Tb));
-        title("Received signal ");
-        ylim([-5 5]);
-        xlim([1 400]);
+        xlim([1 1000]);
+        ylim([-10 10]);
+        subplot(4, 1, 3);
+        plot(1 : NumberOfBits * Tb, outputFilter1(i, 1: NumberOfBits * Tb));
+        title("Filter 1 output");
+        xlim([1 1000]);
+        subplot(4, 1, 4);
+        plot(1 : NumberOfBits * Tb, outputFilter2(i, 1: NumberOfBits * Tb));
+        title("Filter 2 output");
+        xlim([1 1000]);
+        % figure;
+        % subplot(2, 1, 1);
+        % plot(1:NumberOfBits * Tb, PSK(i, 1: NumberOfBits * Tb));
+        % title("Transmitted PSK for SNR = " + snrValue + " and amplitude = " + A(i));
+        % xlim([1 400]);
+        % ylim([-1 1]);
+        % subplot(2,1, 2);
+        % plot(1:NumberOfBits * Tb, receivedPSK(i, 1: NumberOfBits * Tb));
+        % title("Received signal ");
+        % ylim([-5 5]);
+        % xlim([1 400]);
     end
 end
 
+for amplitude = A
+    
+end
