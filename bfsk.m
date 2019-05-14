@@ -81,28 +81,43 @@ for amplitude = A
     end
 end
 
-
-% Now we need to plot the transmitted signals.
-for i = 1 : 2
-    figure;
-    plot(1:NumberOfBits * Tb, FSK(i, 1: NumberOfBits * Tb));
-    title("FSK for SNR = " + (-5 + i) + " and amplitude = " + A(i));
-    xlim([1 400]);
-    ylim([-1 1]);
-    figure;
-    plot(1:NumberOfBits * Tb, PSK(i, 1: NumberOfBits * Tb));
-    title("PSK for SNR = " + (-5 + i) + " and amplitude = " + A(i));
-    xlim([1 400]);
-    ylim([-1 1]);
-end
-
 % Should be the same noise but we need to
 % make sure it corresponds to the length of each modulation technique
 fskNoise = wgn(1, length(FSK), No/2);
-bskNoise = wgn(1, length(PSK), No/2);
+pskNoise = wgn(1, length(PSK), No/2);
 
 % Simulate that we pass the signal through the channel meaning 
 % we add the signal and the noise
 receivedFSK = FSK + fskNoise;
 receivedPSK = PSK + pskNoise;
+
+% Now we need to plot the transmitted signals and the received
+% Plots starting with PSK or FSK are the transmitted and received signal plots.
+for i = 1 : 9
+    snrValue = (-5 + i);
+    if(snrValue == 3 || snrValue == -1)
+        figure;
+        subplot(2, 1, 1);
+        plot(1:NumberOfBits * Tb, FSK(i, 1: NumberOfBits * Tb));
+        title("Transmitted FSK for SNR = " + snrValue + " and amplitude = " + A(i));
+        xlim([1 400]);
+        ylim([-1 1]);
+        subplot(2, 1, 2);
+        plot(1: NumberOfBits * Tb, receivedFSK(i, 1:NumberOfBits * Tb));
+        title("Recevied signal ")
+        xlim([1 400]);
+        ylim([-5 5]);
+        figure;
+        subplot(2, 1, 1);
+        plot(1:NumberOfBits * Tb, PSK(i, 1: NumberOfBits * Tb));
+        title("Transmitted PSK for SNR = " + snrValue + " and amplitude = " + A(i));
+        xlim([1 400]);
+        ylim([-1 1]);
+        subplot(2,1, 2);
+        plot(1:NumberOfBits * Tb, receivedPSK(i, 1: NumberOfBits * Tb));
+        title("Received signal ");
+        ylim([-5 5]);
+        xlim([1 400]);
+    end
+end
 
