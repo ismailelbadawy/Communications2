@@ -40,6 +40,7 @@ message =  rectpulse(bk, Tb);
 figure;
 plot(message);
 ylim([-2 2]);
+xlim([1 400]);
 title('The raw rectangular pulse message');
 xlabel('Time')
 ylabel('Volts')
@@ -63,23 +64,45 @@ SNR = -4 : 1 : 4;
 % and we also know that Tb & No are givens so A would be the only dependent variable if we know the SNR
 A = sqrt(10.^(SNR / 10) * 2 * No/ Tb);
 
-% We have to modulate the message using BFSK for every different amplitude.
+% We have to modulate the message using BFSK and BPSK for every different amplitude.
 t = 1 : NumberOfBits * Tb;
 FSK = t * 0;
+PSK = t * 0;
 for amplitude = A
     for bit = 1 : NumberOfBits * Tb
         if(message(bit) == 1)
+            % we need to set both the FSK and PSK
             FSK(A == amplitude, bit) = amplitude * cos(w1 * bit);
+            PSK(A == amplitude, bit) = amplitude * cos(wc * bit);
         else
             FSK(A == amplitude, bit) = amplitude * cos(w2 * bit);
+            PSK(A == amplitude, bit) = -1 * amplitude * cos(wc * bit);
         end
     end
 end
 
 
-% Now we need to plot every transmitted signal.
-figure;
-plot(1:NumberOfBits * Tb, FSK(9, 1: NumberOfBits * Tb));
-title('FSK for SNR = 4 and amplitude = 0.50');
-xlim([1 400]);
+% Now we need to plot the transmitted signals.
+for i = 1 : 2
+    figure;
+    plot(1:NumberOfBits * Tb, FSK(i, 1: NumberOfBits * Tb));
+    title("FSK for SNR = " + (-5 + i) + " and amplitude = " + A(i));
+    xlim([1 400]);
+    ylim([-1 1]);
+    figure;
+    plot(1:NumberOfBits * Tb, PSK(i, 1: NumberOfBits * Tb));
+    title("PSK for SNR = " + (-5 + i) + " and amplitude = " + A(i));
+    xlim([1 400]);
+    ylim([-1 1]);
+end
+
+% Should be the same noise but we need to
+% make sure it corresponds to the length of each modulation technique
+fskNoise = wgn(1, length(FSK), No/2);
+bskNoise = wgn(1, length(PSK), No/2);
+
+% Simulate that we pass the signal through the channel meaning 
+% we add the signal and the noise
+receivedFSK = FSK + fskNoise;
+receivedPSK = PSK + pskNoise;
 
